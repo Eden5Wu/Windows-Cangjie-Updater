@@ -53,9 +53,10 @@
 
 * **倉頡三代 (`AutoUpdate-CJ3.ps1`)**
   * 碼表來源：[Arthurmcarthur/Cangjie3-Plus](https://github.com/Arthurmcarthur/Cangjie3-Plus)
-  * 內建 7-Zip 提取工具：[mcmilk/7-Zip-zstd](https://github.com/mcmilk/7-Zip-zstd)
+  * 解壓縮工具：[7-Zip](https://www.7-zip.org/)（需由使用者預先安裝）
 * **倉頡五代 (`AutoUpdate-CJ5.ps1`)**
   * 碼表來源：[Jackchows/Cangjie5](https://github.com/Jackchows/Cangjie5)
+  * 使用 PowerShell 內建 `Expand-Archive` 解壓縮 ZIP 檔案
 
 ---
 
@@ -102,11 +103,29 @@
  1. 按下鍵盤 **`Win + X`** 鍵，選擇 **「Windows PowerShell (系統管理員)」** 或 **「終端機 (系統管理員)」**。
  2. 複製並貼上以下指令，然後按 **Enter**：
     ```powershell
+    Unblock-File .\AutoUpdate-CJ-All-in-One.ps1
     Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
     ```
  3. 系統詢問時，輸入 **`Y`** 並按 **Enter** 確認。
+
+ 若您使用三代或五代獨立版，也可以分別執行：
+   ```powershell
+   Unblock-File .\Cangjie3\AutoUpdate-CJ3.ps1
+   Unblock-File .\Cangjie5\AutoUpdate-CJ5.ps1
+   ```
  
  完成後，再次對著腳本按 **「右鍵 -> 使用 PowerShell 執行」** 即可正常運作！
+* **Q：倉頡三代顯示找不到 7-Zip？**
+
+倉頡三代碼表使用 `.7z` 壓縮格式，因此請先安裝官方 [7-Zip](https://www.7-zip.org/)。
+
+腳本會自動檢查以下常見位置：
+
+```text
+C:\Program Files\7-Zip\7z.exe
+C:\Program Files (x86)\7-Zip\7z.exe
+```
+安裝完成後，重新執行腳本即可。
 * **Q: 發生防毒軟體阻擋？**
   * A: 因為腳本會修改系統核心目錄 (`C:\Windows\System32`) 與登錄檔，部分嚴格的防毒軟體可能會跳出警告。此腳本原始碼完全公開透明，請安心放行。
 * **Q: 更新後我想還原怎麼辦？**
