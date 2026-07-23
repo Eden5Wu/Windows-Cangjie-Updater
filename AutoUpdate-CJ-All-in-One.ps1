@@ -1,4 +1,4 @@
-# ==========================================
+﻿# ==========================================
 # 1. 自動升權區塊
 # ==========================================
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -134,30 +134,67 @@ if ($mainChoice -eq '1') {
         "2. Windows 10 2004 之前的版本",
         "0. 退出程式"
     )
-    $subChoice = Show-CountdownMenu -Title "【倉頡三代】請選擇碼表版本：" -Options $subOptions -PromptText "輸入代碼 (0-2)" -DefaultChoice '1' -ValidRegex '^[0-2]$'
+
+    $subChoice = Show-CountdownMenu `
+        -Title "【倉頡三代】請選擇碼表版本：" `
+        -Options $subOptions `
+        -PromptText "輸入代碼 (0-2)" `
+        -DefaultChoice '1' `
+        -ValidRegex '^[0-2]$'
     
     if ($subChoice -eq '0') { exit }
+
     switch ($subChoice) {
         '1' { $prefVersion = "Windows 10 2004及之后的Windows" }
         '2' { $prefVersion = "Windows 10 2004之前的版本" }
     }
+
     Write-Host "[*] 已選定三代版本：「$prefVersion」" -ForegroundColor Green
 
-    $url7z = "https://github.com/Arthurmcarthur/Cangjie3-Plus/releases/download/4.2/MSCJData_20251014_Cangjie3_WithExtJ.7z"
-    $url7za = "https://github.com/mcmilk/7-Zip-zstd/releases/download/v22.01-v1.5.2-R1/7za.exe"
+    $url7z  = "https://github.com/Arthurmcarthur/Cangjie3-Plus/releases/download/4.2/MSCJData_20251014_Cangjie3_WithExtJ.7z"
     $file7z = "$tempWork\CJ3.7z"
-    $exe7za = "$tempWork\7za.exe"
 
-    Write-Host "[*] 正在下載 7-Zip 工具與三代碼表..." -ForegroundColor Cyan
-    Invoke-WebRequest -Uri $url7za -OutFile $exe7za -ErrorAction Stop
-    Invoke-WebRequest -Uri $url7z -OutFile $file7z -ErrorAction Stop
+    # 先找電腦內已安裝的 7-Zip
+    $exe7za = @(
+        "$env:ProgramFiles\7-Zip\7z.exe"
+        "${env:ProgramFiles(x86)}\7-Zip\7z.exe"
+    ) | Where-Object {
+        $_ -and (Test-Path -LiteralPath $_)
+    } | Select-Object -First 1
+
+    # 找不到就提示使用者先安裝
+    if (-not $exe7za) {
+        Write-Host "[!] 找不到已安裝的 7-Zip。" -ForegroundColor Red
+        Write-Host "請先安裝 7-Zip，再重新執行本程式。" -ForegroundColor Yellow
+        Pause
+        exit
+    }
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    Write-Host "[*] 正在下載三代碼表..." -ForegroundColor Cyan
+    Invoke-WebRequest `
+        -Uri $url7z `
+        -OutFile $file7z `
+        -UseBasicParsing `
+        -ErrorAction Stop
 
     Write-Host "[*] 正在從 7z 提取指定碼表..." -ForegroundColor Cyan
-    $internalFile = "$prefVersion\ChtCangjieExt.lex"
+
+    if ($subChoice -eq '1') {
+        $internalFile = "*后*\ChtCangjieExt.lex"
+    } else {
+        $internalFile = "*之前*\ChtCangjieExt.lex"
+    }
+
     $sourceLex = "$tempWork\ChtCangjieExt.lex"
-    
+
     $7zArgs = "e `"$file7z`" -o`"$tempWork`" `"$internalFile`" -r -y"
-    Start-Process -FilePath $exe7za -ArgumentList $7zArgs -Wait -NoNewWindow
+    Start-Process `
+        -FilePath $exe7za `
+        -ArgumentList $7zArgs `
+        -Wait `
+        -NoNewWindow
 }
 
 # 檢查檔案是否成功提取
